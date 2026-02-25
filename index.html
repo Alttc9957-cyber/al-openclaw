@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>普通人驯化AI助手实战手册</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; color: #333; }
+
+    /* 登录页 */
+    #login-page {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 20px;
+    }
+    .login-card {
+      background: white; border-radius: 16px; padding: 40px;
+      max-width: 400px; width: 100%; text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .login-card h1 { font-size: 22px; margin-bottom: 8px; }
+    .login-card p { color: #888; font-size: 14px; margin-bottom: 28px; }
+    .login-card input {
+      width: 100%; padding: 12px 16px; border: 1.5px solid #e0e0e0;
+      border-radius: 8px; font-size: 16px; outline: none; margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .login-card input:focus { border-color: #ff4757; }
+    .login-card button {
+      width: 100%; padding: 13px; background: #ff4757; color: white;
+      border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+      font-weight: 600; transition: opacity 0.2s;
+    }
+    .login-card button:hover { opacity: 0.88; }
+    .error-msg { color: #ff4757; font-size: 13px; margin-top: 8px; display: none; }
+    .author { margin-top: 24px; font-size: 13px; color: #aaa; }
+
+    /* 主界面 */
+    #main-page { display: none; min-height: 100vh; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 260px;
+      background: white; border-right: 1px solid #eee;
+      overflow-y: auto; padding: 24px 0;
+    }
+    .sidebar-title {
+      padding: 0 20px 16px; font-size: 13px; font-weight: 700;
+      color: #ff4757; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .chapter-item {
+      padding: 10px 20px; cursor: pointer; font-size: 14px;
+      color: #555; transition: all 0.15s; border-left: 3px solid transparent;
+    }
+    .chapter-item:hover { background: #fff5f5; color: #ff4757; }
+    .chapter-item.active { background: #fff5f5; color: #ff4757; border-left-color: #ff4757; font-weight: 600; }
+    .content-area {
+      margin-left: 260px; padding: 48px 60px; max-width: 860px;
+    }
+    .content-area h1 { font-size: 28px; margin-bottom: 8px; }
+    .content-area h2 { font-size: 20px; margin: 28px 0 12px; }
+    .content-area h3 { font-size: 16px; margin: 20px 0 8px; }
+    .content-area p { line-height: 1.8; margin-bottom: 14px; color: #444; }
+    .content-area ul, .content-area ol { padding-left: 20px; margin-bottom: 14px; }
+    .content-area li { line-height: 1.8; color: #444; }
+    .content-area code {
+      background: #f0f0f0; padding: 2px 6px; border-radius: 4px;
+      font-family: monospace; font-size: 13px;
+    }
+    .content-area pre {
+      background: #1e1e1e; color: #d4d4d4; padding: 20px;
+      border-radius: 10px; overflow-x: auto; margin: 16px 0;
+    }
+    .content-area pre code { background: none; color: inherit; padding: 0; }
+    .content-area hr { border: none; border-top: 1px solid #eee; margin: 28px 0; }
+    .content-area blockquote {
+      border-left: 3px solid #ff4757; padding-left: 16px;
+      color: #888; margin: 16px 0;
+    }
+    .top-bar {
+      position: fixed; top: 0; left: 260px; right: 0; height: 56px;
+      background: white; border-bottom: 1px solid #eee;
+      display: flex; align-items: center; padding: 0 60px;
+      justify-content: space-between; z-index: 10;
+    }
+    .top-bar-title { font-size: 15px; font-weight: 600; color: #333; }
+    .logout-btn {
+      font-size: 13px; color: #aaa; cursor: pointer; padding: 6px 12px;
+      border-radius: 6px; transition: all 0.15s;
+    }
+    .logout-btn:hover { background: #f5f5f5; color: #333; }
+    .content-wrapper { margin-top: 56px; }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; position: relative; height: auto; border-right: none; border-bottom: 1px solid #eee; }
+      .content-area { margin-left: 0; padding: 24px 20px; }
+      .top-bar { left: 0; padding: 0 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div id="login-page">
+  <div class="login-card">
+    <h1>📚 AI助手实战手册</h1>
+    <p>普通人驯化AI助手，从安装到变现</p>
+    <input type="text" id="code-input" placeholder="输入兑换码" autocomplete="off">
+    <button onclick="login()">进入手册</button>
+    <div class="error-msg" id="error-msg">兑换码不正确，请重试</div>
+    <div class="author">by 乐时一 · 00后摄影师在杭州创业</div>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div id="main-page">
+  <div class="top-bar">
+    <span class="top-bar-title" id="current-chapter-title">普通人驯化AI助手实战手册</span>
+    <span class="logout-btn" onclick="logout()">退出</span>
+  </div>
+  <div class="sidebar">
+    <div class="sidebar-title">📚 目录</div>
+    <div id="chapter-list"></div>
+  </div>
+  <div class="content-area">
+    <div class="content-wrapper" id="content"></div>
+  </div>
+</div>
+
+<script>
+// ===== 兑换码配置 =====
+const CODES = [
+  "AILE2026",   // 通用码
+  "XIAOLE001",  // 个人码
+  "PILOT888",   // 内测码
+];
+
+// ===== 章节配置 =====
+const CHAPTERS = [
+  { id: "intro",   title: "📖 前言：为什么写这本手册" },
+  { id: "ch01",    title: "第一章：安装篇" },
+  { id: "ch02",    title: "第二章：记忆系统篇" },
+  { id: "ch03",    title: "第三章：个人画像篇" },
+  { id: "ch04",    title: "第四章：规则系统篇" },
+  { id: "ch05",    title: "第五章：省钱篇" },
+  { id: "ch06",    title: "第六章：自动化篇" },
+  { id: "ch07",    title: "第七章：内容创作篇" },
+];
+
+function login() {
+  const code = document.getElementById("code-input").value.trim().toUpperCase();
+  if (CODES.includes(code)) {
+    localStorage.setItem("handbook_auth", code);
+    showMain();
+  } else {
+    document.getElementById("error-msg").style.display = "block";
+  }
+}
+
+function logout() {
+  localStorage.removeItem("handbook_auth");
+  document.getElementById("main-page").style.display = "none";
+  document.getElementById("login-page").style.display = "flex";
+}
+
+function showMain() {
+  document.getElementById("login-page").style.display = "none";
+  document.getElementById("main-page").style.display = "block";
+  buildSidebar();
+  loadChapter("intro");
+}
+
+function buildSidebar() {
+  const list = document.getElementById("chapter-list");
+  list.innerHTML = CHAPTERS.map(ch =>
+    `<div class="chapter-item" id="nav-${ch.id}" onclick="loadChapter('${ch.id}')">${ch.title}</div>`
+  ).join("");
+}
+
+function loadChapter(id) {
+  document.querySelectorAll(".chapter-item").forEach(el => el.classList.remove("active"));
+  const navEl = document.getElementById("nav-" + id);
+  if (navEl) navEl.classList.add("active");
+
+  const ch = CHAPTERS.find(c => c.id === id);
+  if (ch) document.getElementById("current-chapter-title").textContent = ch.title;
+
+  fetch(`content/chapters/${id}.md?t=${Date.now()}`)
+    .then(r => r.ok ? r.text() : "# 🚧 内容准备中\n\n这一章正在写，敬请期待。")
+    .then(md => {
+      document.getElementById("content").innerHTML = marked.parse(md);
+      window.scrollTo(0, 0);
+    })
+    .catch(() => {
+      document.getElementById("content").innerHTML = marked.parse("# 🚧 内容准备中\n\n这一章正在写，敬请期待。");
+    });
+}
+
+// 回车登录
+document.getElementById("code-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") login();
+});
+
+// 自动登录
+if (localStorage.getItem("handbook_auth")) showMain();
+</script>
+</body>
+</html>
